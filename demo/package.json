@@ -1,0 +1,19 @@
+{
+  "name": "demo",
+  "version": "1.0.0",
+  "main": "infrastructure.js",
+  "type": "module",
+  "scripts": {
+    "start-infra": "nodemon --watch ../cascade-runner --watch . --ext js,json infrastructure.js",
+    "start-demo": "node run-demo.js"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2",
+    "nodemon": "^3.1.10",
+    "vm2": "^3.9.18"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

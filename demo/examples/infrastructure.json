@@ -1,0 +1,9 @@
+{
+  "instances": [
+    { "name": "Reporter (M1)", "port": 3000, "logLevel": "INFO" },
+    { "name": "AuthService (M2)", "port": 3001, "logLevel": "DEBUG" },
+    { "name": "RegistryService (M3)", "port": 3002, "logLevel": "INFO" },
+    { "name": "CollectorService (M4)", "port": 3003, "logLevel": "DEBUG" },
+    { "name": "EmailService (M5)", "port": 3004, "logLevel": "INFO" }
+  ]
+}

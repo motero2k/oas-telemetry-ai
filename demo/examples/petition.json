@@ -1,0 +1,95 @@
+[
+  {
+    "type": "code",
+    "source": "logger.info('User clicked Generate Report – Reporter (M1)')"
+  },
+  {
+    "type": "code",
+    "source": "logger.info('Reporter (M1) checking for user authorization');"
+  },
+  {
+    "type": "http",
+    "url": "http://localhost:3001/api/v1/execute",
+    "body": [
+      {
+        "type": "code",
+        "source": "logger.debug('AuthService (M2) validating user');"
+      },
+      {
+        "type": "code",
+        "source": "logger.info('AuthService (M2) user is authorized'); return 'User authorized';"
+      }
+    ]
+  },
+  {
+    "type": "code",
+    "source": "logger.info('The user is authorized');"
+  },
+  {
+    "type": "code",
+    "source": "logger.info('Reporter checking for existing SLA chart data');"
+  },
+  {
+    "type": "code",
+    "source": "const dataExists = false; if (dataExists) { logger.warn('Data already exists, skipping Registry'); return 'Chart generated'; } else { logger.info('No existing chart data, proceeding to Registry'); }"
+  },
+  {
+    "type": "http",
+    "url": "http://localhost:3002/api/v1/execute",
+    "body": [
+      {
+        "type": "code",
+        "source": "logger.info('A new Report requested, Found 4 active SLA guarantees');"
+      },
+      {
+        "type": "code",
+        "source": "logger.info('Calling CollectorService sequentially for each SLA guarantee');"
+      },
+      {
+        "type": "http",
+        "repeat": 4,
+        "url": "http://localhost:3003/api/v1/execute",
+        "body": [
+          {
+            "type": "code",
+            "source": "logger.debug('CollectorService (M4) fetching SLA data'); await new Promise(r => setTimeout(r, 700)); return [1, 2, 3];"
+          }
+        ]
+      },
+      {
+        "type": "code",
+        "source": "logger.info('CollectorService returned data for all 4 guarantees succesfully, generating final Report '); return 'Data collected';"
+      },
+      {
+        "type": "code",
+        "source": "logger.info('Report complete, sending email to user');"
+      },
+      {
+        "type": "http",
+        "url": "http://localhost:3004/api/v1/execute",
+        "body": [
+          {
+            "type": "code",
+            "source": "logger.info('Sending SLA report to user');"
+          },
+          {
+            "type": "code",
+            "source": "logger.info('Email sent successfully'); return 'Email sent successfully';"
+          }
+        ]
+      },
+      {
+        "type": "code",
+        "source": "logger.info('Returning final SLA report to Reporter'); return 'Report complete';"
+      }
+    ]
+  },
+  {
+    "type": "code",
+    "source": "logger.info('Received final report from Registry, generating the charts');"
+  },
+  {
+    "type": "code",
+    "source": "logger.info('Chart generated and returned to user');"
+  }
+]
