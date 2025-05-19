@@ -55,7 +55,7 @@ const getMetrics = async (searchInput) => {
 const getCurrentTimestampInEpoch = () => {
   console.log("Getting the current timestamp in epoch format...");
   const now = new Date();
-  return { currentTimestampInEpoch: now.getTime() };
+  return { currentTimestampInEpoch: now.getTime() , currentTimestampInEpochSeconds: Math.floor(now.getTime() / 1000) };
 };
 
 const startTelemetry = () => {
@@ -125,7 +125,8 @@ const tools = [
         Traces provide detailed information about requests and their lifecycle, including HTTP attributes (e.g., URL, method, status code), 
         network details (e.g., peer IP, port), and timing information. 
         The 'searchInput' parameter is an object used to filter traces based on specific criteria. 
-        This is a NeDB query using MongoDB-like syntax (neDB). If 'searchInput' is null, all traces will be fetched. Providing specific filters improves performance.
+        This is a NeDB query using MongoDB-like syntax (neDB). If 'searchInput' is null, all traces will be fetched.
+        Providing specific filters improves performance.
 
         Available properties for filtering:
         {
@@ -165,17 +166,23 @@ const tools = [
           "_duration": { "0": 0, "1": 2071700 }
         }
 
-        Example 'searchInput':
+
+        you can use $or, or $gte or operators like that if needed never > or similar.
+        Take into account that startTime.0 and endTime.0 are in epoch SECONDS format not milliseconds.
+        For time search ALWAYS use "endTime.0": { "$gte": number } or similar with other operators and startTime.0.
+        Common filters include HTTP attributes (e.g., method, status code, URL), timestamps (e.g., 'endTime.0'), or duration ('_duration').
+        
+        Example 'query':
         {
           "attributes.http.method": "GET",
-          "attributes.http.status_code": 200,
+          "attributes.http.status_code": 200, //when asked for ANY error you can use $gte : 400 operator
           "attributes.http.url": "http://localhost:3002/api/v1/greet",
-          "_duration": { "$lte": 5000000 }
+          "_duration": { "$lte": 5000000 },
+          "endTime.0": { "$gte": 1747666254 },
         }
-        you must give a {searchInput: searchInput} object to the function
-        you can use $or, or $gte or operators like that if needed never > or similar.
-        You must not filter by time never, specify this in your response
-        Common filters include HTTP attributes (e.g., method, status code, URL), timestamps (e.g., 'endTime'), or duration ('_duration').`,
+        you must give a {searchInput: query} object to the function
+        
+        `,
       parameters: {
         type: "object",
         properties: {
@@ -294,8 +301,8 @@ const tools = [
     type: "function",
     function: {
       name: "getCurrentTimestampInEpoch",
-      description: `Retrieves the current timestamp in epoch format. 
-        This function calculates the timestamp for the current moment in milliseconds since the Unix epoch.`,
+      description: `Retrieves the current timestamp in epoch format (miliseconds or seconds). 
+        This function calculates the timestamp for the current moment in milliseconds since the Unix epoch.in .currentTimestampInEpoch. Also returns the current timestamp in seconds in .currentTimestampInEpochSeconds.`,
       parameters: {}
     }
   },
