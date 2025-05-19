@@ -38,14 +38,7 @@ const getMetrics = async (searchInput) => {
         else resolve(docs);
       });
     });
-    const fakeMetrics = {
-      timestamp: 1747651105757,
-      cpuUsageData: 20,
-      memoryData: 30
-    };
-    return { metrics: fakeMetrics };
-
-    // return { metrics };
+    return { metrics };
   } catch (error) {
     console.error('Error fetching metrics:', error);
     throw error;
@@ -109,38 +102,23 @@ const tools = [
       description: `Fetches log data for the microservice. 
         Logs provide information about system events, including timestamps, log levels (e.g., info, error), and messages. 
         The 'startDate' and 'endDate' parameters define the time range for fetching logs. 
-        If both are null, all logs will be fetched. Providing a date range improves performance.
-        
-        Example logs:
-        [
-          {
-            "timestamp": "2025-05-19T10:22:56.464Z",
-            "level": "info",
-            "message": "CollectorService returned data for all guarantees successfully."
-          },
-          {
-            "timestamp": "2025-05-19T10:22:56.467Z",
-            "level": "info",
-            "message": "Report complete, sending email to user."
-          }
-        ]`,
+        If don't provide a range, all logs will be fetched. Providing a specific range improves performance.
+        Example 'startDate' and 'endDate':
+        {
+          "startDate": "2023-10-01T00:00:00Z",
+          "endDate": "2023-10-02T00:00:00Z"
+        }
+        Common filters include timestamps or log levels.`,
       parameters: {
         type: "object",
         properties: {
           startDate: { 
-            type: "string", 
-            format: "date-time", 
-            description: `Start date for the log query in ISO 8601 format. 
-              For example, '2025-05-19T10:22:56.464Z'. If null, logs from the earliest available time will be fetched.` 
+            type: "string"
           },
           endDate: { 
-            type: "string", 
-            format: "date-time", 
-            description: `End date for the log query in ISO 8601 format. 
-              For example, '2025-05-19T10:22:56.467Z'. If null, logs up to the latest available time will be fetched.` 
+            type: "string"
           }
         },
-        required: ["startDate", "endDate"]
       }
     }
   },
