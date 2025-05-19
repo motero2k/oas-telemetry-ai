@@ -7,6 +7,7 @@ import authRoutes from './routes/authRoutes.js';
 import { telemetryRoutes } from './routes/telemetryRoutes.js';
 import { InMemoryExporter } from './exporters/InMemoryDbExporter.js';
 import metricsRoutes from './routes/metricsRoutes.js';
+import { answerQuestion } from './ai/agent.js';
 
 
 let dbglog = () => { };
@@ -67,6 +68,19 @@ export default function oasTelemetry(OasTlmConfig) {
         const logs = globalOasTlmConfig.logExporter.getLogs(startDate, endDate);
         res.json(logs);
     });
+
+    router.post(globalOasTlmConfig.baseURL + '/chat', async (req, res) => {
+        try {
+          const { question } = req.body;
+          if (!question) return res.status(400).json({ error: 'Missing question' });
+      
+          const answer = await answerQuestion(question);
+          res.json({ answer });
+        } catch (error) {
+          console.error(error);
+          res.status(500).json({ error: 'Internal error' });
+        }
+      });
 
     if (globalOasTlmConfig.autoActivate) {
         globalOasTlmConfig.dynamicExporter.exporter?.start();
