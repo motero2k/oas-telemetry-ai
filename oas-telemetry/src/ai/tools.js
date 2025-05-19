@@ -1,5 +1,5 @@
 import { globalOasTlmConfig } from '../config.js';
-
+import axios from 'axios';
 
 const getTraces = async (searchInput) => {
   console.log("getTraces called with searchInput:", searchInput);
@@ -42,7 +42,7 @@ const getMetrics = async (searchInput) => {
         else resolve(docs);
       });
     });
-    const simplifiedMetrics = simplifyMetrics(metrics);
+    const simplifiedMetrics = getSimplifyMetrics(metrics);
     console.log(`Searching for metrics with searchInput: ${JSON.stringify(search)}`);
     console.log(`Metrics found: ${JSON.stringify(simplifiedMetrics.length)}`);
     return { metrics };
@@ -79,6 +79,42 @@ const getTelemetryStatus = () => {
   return { active: isRunning };
 }
 
+const microserviceAgent = [
+  {
+    name: "Reporter",
+    url: "http://localhost:3000/telemetry/chat",
+  },
+  {
+    name: "AuthService",
+    url: "http://localhost:3001/telemetry/chat",
+  },
+  {
+    name: "RegistryService",
+    url: "http://localhost:3002/telemetry/chat",
+  },
+  {
+    name: "CollectorService",
+    url: "http://localhost:3003/telemetry/chat",
+  },
+  {
+    name: "EmailService",
+    url: "http://localhost:3004/telemetry/chat",
+  }
+]
+
+const talkToExternalMicroserviceAgent = async (message, microservice) => {
+  console.log("talkToExternalMicroserviceAgent called with question:", message, "microservice:", microservice);
+  let currentMicrosevice = microserviceAgent.find(m => m.name === microservice);
+  const microserviceName = currentMicrosevice.name;
+  const microserviceUrl = currentMicrosevice.url;
+  const microserviceResponse = await axios.post(microserviceUrl, {
+    question: message
+  });
+  return {
+    microservice: microserviceName,
+    response: microserviceResponse.data
+  };
+};
 
 const tools = [
   {
@@ -262,6 +298,38 @@ const tools = [
         This function calculates the timestamp for the current moment in milliseconds since the Unix epoch.`,
       parameters: {}
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "talkToExternalMicroserviceAgent",
+      description: `Use this function to communicate with external microservice agent.
+        if you want to talk to a microservice agent, you must provide the message and the microservice you want to talk to.  
+        When you call this function, it will send the message to the specified microservice and return the response.
+
+        Example 'message':
+        {
+          "message": "What is the status of the service?",
+          "microservice": "Reporter"
+        }
+
+        Microservices Availables:
+        ${microserviceAgent.map(m => m.name).join(", ")}
+        `,
+      parameters: {
+        type: "object",
+        properties: {
+          message: {
+            type: "string",
+            description: `The message to be sent to the external microservice agent.`
+          },
+          microservice: {
+            type: "string"
+          }
+        },
+        required: ["message", "microservice"]
+      }
+    }
   }
 ];
 
@@ -273,7 +341,8 @@ const availableTools = {
   stopTelemetry,
   resetTelemetry,
   getTelemetryStatus,
-  getCurrentTimestampInEpoch
+  getCurrentTimestampInEpoch,
+  talkToExternalMicroserviceAgent
 };
 
 export {
@@ -283,7 +352,7 @@ export {
 
 
 
-const simplifyMetrics = (metrics) => {
+const getSimplifyMetrics = (metrics) => {
   const simplifiedMetrics = metrics.map(item => {
     const cpuCount = item.cpuUsageData.length;
 
