@@ -11,7 +11,10 @@ const getTraces = async (searchInput) => {
         else resolve(docs);
       });
     });
-    return { traces };
+    const simplifiedTraces = getSimplifiedTraces(traces);
+    console.log(`Searching for traces with searchInput: ${JSON.stringify(search)}`);
+    console.log(`Traces found: ${JSON.stringify(simplifiedTraces.length)}`);
+    return { traces: simplifiedTraces };
   } catch (error) {
     console.error('Error fetching traces:', error);
     throw error;
@@ -39,11 +42,20 @@ const getMetrics = async (searchInput) => {
         else resolve(docs);
       });
     });
+    const simplifiedMetrics = simplifyMetrics(metrics);
+    console.log(`Searching for metrics with searchInput: ${JSON.stringify(search)}`);
+    console.log(`Metrics found: ${JSON.stringify(simplifiedMetrics.length)}`);
     return { metrics };
   } catch (error) {
     console.error('Error fetching metrics:', error);
     throw error;
   }
+};
+
+const getCurrentTimestampInEpoch = () => {
+  console.log("Getting the current timestamp in epoch format...");
+  const now = new Date();
+  return { currentTimestampInEpoch: now.getTime() };
 };
 
 const startTelemetry = () => {
@@ -77,41 +89,67 @@ const tools = [
         Traces provide detailed information about requests and their lifecycle, including HTTP attributes (e.g., URL, method, status code), 
         network details (e.g., peer IP, port), and timing information. 
         The 'searchInput' parameter is an object used to filter traces based on specific criteria. 
-        This is a NeDB query using MongoDB-like syntax. If 'searchInput' is null, all traces will be fetched. Providing specific filters improves performance.
-        
+        This is a NeDB query using MongoDB-like syntax (neDB). If 'searchInput' is null, all traces will be fetched. Providing specific filters improves performance.
+
+        Available properties for filtering:
+        {
+          "name": "GET", // Name of the span
+          "kind": 1, // 1 for incoming requests, 2 for outgoing requests
+          "attributes": {
+            "http": {
+              "url": "http://localhost:3002/api/v1/greet",
+              "host": "localhost:3002",
+              "method": "GET",
+              "scheme": "http",
+              "target": "/api/v1/greet",
+              "user_agent": "PostmanRuntime/7.44.0",
+              "request_content_length_uncompressed": 39,
+              "flavor": "1.1",
+              "status_code": 200,
+              "status_text": "OK"
+            },
+            "net": {
+              "host": {
+                "name": "localhost",
+                "ip": "::1",
+                "port": 3002
+              },
+              "transport": "ip_tcp",
+              "peer": {
+                "ip": "::1",
+                "port": 50361
+              }
+            }
+          },
+          "traceId": "5f7df252eb00e873bbd6441f86b71dac",
+          "spanId": "fbd8ea558dd6ac32",
+          "service": "oas-telemetry-service",
+          "startTime": { "0": 1747666254, "1": 333000000 },
+          "endTime": { "0": 1747666254, "1": 335071700 },
+          "_duration": { "0": 0, "1": 2071700 }
+        }
+
         Example 'searchInput':
         {
           "attributes.http.method": "GET",
-          "$or": [
-            { "attributes.http.status_code": 200 },
-            { "attributes.http.status_code": 304 }
-          ]
+          "attributes.http.status_code": 200,
+          "attributes.http.url": "http://localhost:3002/api/v1/greet",
+          "_duration": { "$lte": 5000000 }
         }
-        
-        Common filters include timestamps or 'attributes.http.url'.`,
+        you must give a {searchInput: searchInput} object to the function
+        you can use $or, or $gte or operators like that if needed never > or similar.
+        You must not filter by time never, specify this in your response
+        Common filters include HTTP attributes (e.g., method, status code, URL), timestamps (e.g., 'endTime'), or duration ('_duration').`,
       parameters: {
         type: "object",
         properties: {
-          searchInput: { 
-            type: "object", 
+          searchInput: {
+            type: "object",
             description: `Optional search criteria for filtering traces. 
-              This is a NeDB query using MongoDB-like syntax. 
-              For example, you can filter by HTTP method, status code, or timestamps. 
+              This is a NeDB query using MongoDB-like (neDB) syntax. 
+              For example, you can filter by HTTP attributes, timestamps, or duration. 
               If null, all traces will be returned.`,
-            properties: {
-              "attributes.http.method": { type: "string" },
-              "$or": {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    "attributes.http.status_code": { type: "integer" }
-                  }
-                }
-              },
-              "attributes.http.url": { type: "string" },
-              "timestamp": { type: "object", properties: { "$gte": { type: "integer" }, "$lte": { type: "integer" } } }
-            }
+            additionalProperties: true
           }
         },
         required: ["searchInput"]
@@ -135,10 +173,10 @@ const tools = [
       parameters: {
         type: "object",
         properties: {
-          startDate: { 
+          startDate: {
             type: "string"
           },
-          endDate: { 
+          endDate: {
             type: "string"
           }
         },
@@ -152,7 +190,7 @@ const tools = [
       description: `Fetches metrics data for the microservice. 
         Metrics provide performance-related data, such as CPU usage, memory usage, and process-specific metrics. 
         The 'searchInput' parameter is an object used to filter metrics based on specific criteria. 
-        This is a NeDB query using MongoDB-like syntax. If 'searchInput' is null, all metrics will be fetched. Providing specific filters improves performance.
+        This is a NeDB query using MongoDB-like (NeDB) syntax. If 'searchInput' is null, all metrics will be fetched. Providing specific filters improves performance.
         
         Example 'searchInput':
         {
@@ -163,10 +201,10 @@ const tools = [
       parameters: {
         type: "object",
         properties: {
-          searchInput: { 
-            type: "object", 
+          searchInput: {
+            type: "object",
             description: `Optional search criteria for filtering metrics. 
-              This is a NeDB query using MongoDB-like syntax. 
+              This is a NeDB query using MongoDB-like (NeDB) syntax. 
               For example, you can filter by timestamps. 
               If null, all metrics will be returned.`,
             properties: {
@@ -215,6 +253,15 @@ const tools = [
         This function checks whether the telemetry system is currently active or inactive.`,
       parameters: {}
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "getCurrentTimestampInEpoch",
+      description: `Retrieves the current timestamp in epoch format. 
+        This function calculates the timestamp for the current moment in milliseconds since the Unix epoch.`,
+      parameters: {}
+    }
   }
 ];
 
@@ -225,10 +272,72 @@ const availableTools = {
   startTelemetry,
   stopTelemetry,
   resetTelemetry,
-  getTelemetryStatus
+  getTelemetryStatus,
+  getCurrentTimestampInEpoch
 };
 
-export { 
-    tools, 
-    availableTools, 
+export {
+  tools,
+  availableTools,
 };
+
+
+
+const simplifyMetrics = (metrics) => {
+  const simplifiedMetrics = metrics.map(item => {
+    const cpuCount = item.cpuUsageData.length;
+
+    const totalCpuPercentages = item.cpuUsageData.reduce((acc, cpu) => {
+      acc.user += cpu.userP;
+      acc.system += cpu.systemP;
+      acc.idle += cpu.idleP;
+      return acc;
+    }, { user: 0, system: 0, idle: 0 });
+
+    const avgCpuUsage = {
+      userP: (totalCpuPercentages.user / cpuCount).toFixed(4),
+      systemP: (totalCpuPercentages.system / cpuCount).toFixed(4),
+      idleP: (totalCpuPercentages.idle / cpuCount).toFixed(4)
+    };
+
+    return {
+      timestamp: item.timestamp,
+      cpuCount,
+      avgCpuUsage,
+      cpuUsageByCore: item.cpuUsageData.map(cpu => ({
+        cpu: cpu.cpuNumber,
+        userP: cpu.userP,
+        systemP: cpu.systemP,
+        idleP: cpu.idleP
+      })),
+      memoryUsage: {
+        usedBytes: item.memoryData.used,
+        freeBytes: item.memoryData.free,
+        usedP: item.memoryData.usedP.toFixed(4),
+        freeP: item.memoryData.freeP.toFixed(4)
+      },
+      processCpuUsage: {
+        totalP: (item.processCpuUsageData.userP + item.processCpuUsageData.systemP).toFixed(4)
+      },
+      processMemoryBytes: item.processMemoryData
+    };
+  });
+  return simplifiedMetrics;
+}
+
+
+
+function getSimplifiedTraces(spans) {
+  return spans.map(span => {
+    return {
+      name: span.name,
+      kind: span.kind,
+      attributes: span.attributes,
+      resource: span.resource,
+      _spanContext: span._spanContext,
+      startTime: span.startTime,
+      endTime: span.endTime,
+      _duration: span._duration
+        };
+      });
+}

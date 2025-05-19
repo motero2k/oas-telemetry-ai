@@ -31,36 +31,47 @@ app.post('/api/v1/execute', async (req, res) => {
   }
 });
 
-async function processActions(actions) {
-  const results = [];
-
-  for (const action of actions) {
-    const repeat = action.repeat || 1;
-    for (let i = 0; i < repeat; i++) {
-        if (action.type === 'code') {
-            const result = await executeCode(action.source);
-            results.push(result);
-        } else if (action.type === 'http') {
-            const response = await forwardRequest(action);
-            results.push(response);
-        } else {
-            logger.warn('Unknown action type:', action.type);
-            results.push({ error: `Unknown action type: ${action.type}` });
-        }
-    }
-  }
-
-  return results;
+app.get('/api/v1/health', (req, res) => {
+  res.json({ status: 'ok' });
 }
+);
+
+app.get('/api/v1/greet', (req, res) => {
+  const name = req.query.name || 'World';
+  res.json({ message: `Hello, ${name}!` });
+}
+);
+
+async function processActions(actions) {
+    const results = [];
+
+    for (const action of actions) {
+      const repeat = action.repeat || 1;
+      for (let i = 0; i < repeat; i++) {
+        if (action.type === 'code') {
+          const result = await executeCode(action.source);
+          results.push(result);
+        } else if (action.type === 'http') {
+          const response = await forwardRequest(action);
+          results.push(response);
+        } else {
+          logger.warn('Unknown action type:', action.type);
+          results.push({ error: `Unknown action type: ${action.type}` });
+        }
+      }
+    }
+
+    return results;
+  }
 
 async function executeCode(source) {
     const vm = new NodeVM({
-        console: 'inherit',
-        sandbox: { logger, fetch },
-        require: {
-            external: false
-        },
-        timeout: 3000
+      console: 'inherit',
+      sandbox: { logger, fetch },
+      require: {
+        external: false
+      },
+      timeout: 3000
     });
 
     return await vm.run(`
@@ -68,22 +79,22 @@ async function executeCode(source) {
             ${source}
         })();
     `);
-}
+  }
 
 async function forwardRequest({ url, method = 'POST', headers = {}, body }) {
-  const response = await fetch(url, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...headers
-    },
-    body: JSON.stringify(body)
-  });
+    const response = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        ...headers
+      },
+      body: JSON.stringify(body)
+    });
 
-  const data = await response.json().catch(() => ({}));
-  return data.results || data;
-}
+    const data = await response.json().catch(() => ({}));
+    return data.results || data;
+  }
 
 app.listen(port, () => {
-  logger.info(`cascade-runner running on port ${port}`);
-});
+    logger.info(`cascade-runner running on port ${port}`);
+  });
