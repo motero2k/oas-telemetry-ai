@@ -61,6 +61,13 @@ export default function oasTelemetry(OasTlmConfig) {
     router.use(baseURL, telemetryRoutes);
     router.use(baseURL + "/metrics", metricsRoutes);
 
+    // Add a route to retrieve logs with optional date filtering
+    router.get(globalOasTlmConfig.baseURL + '/logs', (req, res) => {
+        const { startDate, endDate } = req.query;
+        const logs = globalOasTlmConfig.logExporter.getLogs(startDate, endDate);
+        res.json(logs);
+    });
+
     if (globalOasTlmConfig.autoActivate) {
         globalOasTlmConfig.dynamicExporter.exporter?.start();
     }

@@ -1,6 +1,7 @@
 import { metrics } from "@opentelemetry/api";
 import DynamicExporter from "./exporters/dynamicExporter.js";
 import { InMemoryDBMetricsExporter } from "./exporters/InMemoryDBMetricsExporter.js";
+import { InMemoryLogExporter } from "./exporters/InMemoryLogExporter.js";
 
 //Environment variables
 //OASTLM_MODULE_DISABLED = 'true' //Disables the module (empty middleware and no tracing)
@@ -8,6 +9,7 @@ import { InMemoryDBMetricsExporter } from "./exporters/InMemoryDBMetricsExporter
 export const globalOasTlmConfig = {
     dynamicExporter: new DynamicExporter(),
     metricsExporter: new InMemoryDBMetricsExporter(),
+    logExporter: new InMemoryLogExporter(), // Add log exporter
     systemMetricsInterval: 1000 * 5, // 5 seconds
     baseURL: "/telemetry",
     spec: null,
