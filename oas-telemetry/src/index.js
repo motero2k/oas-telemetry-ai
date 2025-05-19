@@ -8,6 +8,9 @@ import { telemetryRoutes } from './routes/telemetryRoutes.js';
 import { InMemoryExporter } from './exporters/InMemoryDbExporter.js';
 import metricsRoutes from './routes/metricsRoutes.js';
 import { answerQuestion } from './ai/agent.js';
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 
 let dbglog = () => { };
@@ -81,6 +84,16 @@ export default function oasTelemetry(OasTlmConfig) {
           res.status(500).json({ error: 'Internal error' });
         }
       });
+
+    // Servir chat.html explícitamente en /chat/ui y /chat/ui/
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    router.get(globalOasTlmConfig.baseURL + '/chat/ui', (req, res) => {
+        res.sendFile(path.join(__dirname, 'ai', 'chat.html'));
+    });
+
+    router.use(globalOasTlmConfig.baseURL + '/chat/ui', 
+        express.static(path.join(__dirname, 'ai'))
+    );
 
     if (globalOasTlmConfig.autoActivate) {
         globalOasTlmConfig.dynamicExporter.exporter?.start();

@@ -116,6 +116,11 @@ const talkToExternalMicroserviceAgent = async (message, microservice) => {
   };
 };
 
+const getMicroserviceAgents = () => {
+  console.log("Getting microservice agents...");
+  return microserviceAgent;
+};
+
 const tools = [
   {
     type: "function",
@@ -337,6 +342,15 @@ const tools = [
         required: ["message", "microservice"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "getMicroserviceAgents",
+      description: `Retrieves the list of available microservice agents. 
+        This function provides information about the microservices that can be communicated with.`,
+      parameters: {}
+    }
   }
 ];
 
@@ -349,7 +363,8 @@ const availableTools = {
   resetTelemetry,
   getTelemetryStatus,
   getCurrentTimestampInEpoch,
-  talkToExternalMicroserviceAgent
+  talkToExternalMicroserviceAgent,
+  getMicroserviceAgents
 };
 
 export {
