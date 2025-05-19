@@ -1,5 +1,6 @@
 import { globalOasTlmConfig } from '../config.js';
 
+
 const getTraces = async (searchInput) => {
   console.log("getTraces called with searchInput:", searchInput);
   try {
@@ -44,6 +45,28 @@ const getMetrics = async (searchInput) => {
     throw error;
   }
 };
+
+const startTelemetry = () => {
+  console.log("Starting telemetry...");
+  globalOasTlmConfig.dynamicExporter.exporter.start();
+}
+
+const stopTelemetry = () => {
+  console.log("Stopping telemetry...");
+  globalOasTlmConfig.dynamicExporter.exporter.stop();
+}
+
+const resetTelemetry = () => {
+  console.log("Resetting telemetry...");
+  globalOasTlmConfig.dynamicExporter.exporter.reset();
+}
+
+const getTelemetryStatus = () => {
+  console.log("Getting telemetry status...");
+  const isRunning = globalOasTlmConfig.dynamicExporter.exporter.isRunning() || false;
+  return { active: isRunning };
+}
+
 
 const tools = [
   {
@@ -156,13 +179,53 @@ const tools = [
         required: ["searchInput"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "startTelemetry",
+      description: `Starts the telemetry data collection process. 
+        This function initializes the telemetry system and begins capturing trace, log, and metric data.`,
+      parameters: {}
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "stopTelemetry",
+      description: `Stops the telemetry data collection process. 
+        This function halts the telemetry system and stops capturing trace, log, and metric data.`,
+      parameters: {}
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "resetTelemetry",
+      description: `Resets the telemetry data collection process. 
+        This function clears any existing telemetry data and prepares the system for a fresh start.`,
+      parameters: {}
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "getTelemetryStatus",
+      description: `Retrieves the current status of the telemetry system. 
+        This function checks whether the telemetry system is currently active or inactive.`,
+      parameters: {}
+    }
   }
 ];
 
 const availableTools = {
   getTraces,
   getLogs,
-  getMetrics
+  getMetrics,
+  startTelemetry,
+  stopTelemetry,
+  resetTelemetry,
+  getTelemetryStatus
 };
 
 export { 
