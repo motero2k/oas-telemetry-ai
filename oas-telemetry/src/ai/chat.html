@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Chat Telemetría de Microservicios</title>
+  <title>Microservice Telemetry Agent</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- Chat UI Kit CSS -->
   <link rel="stylesheet" href="https://unpkg.com/@chatscope/chat-ui-kit-styles/dist/default/styles.min.css" />
+  <!-- Marked.js for Markdown rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     body {
       background: #f3f4f6;
@@ -14,9 +16,9 @@
     }
     .chat-wrapper {
       position: relative;
-      height: 600px;
+      height: 90vh;
       width: 100%;
-      max-width: 700px;
+      max-width: 1100px;
       margin: 40px auto;
       background-color: #f9fafb;
       border-radius: 10px;
@@ -116,11 +118,11 @@
 </head>
 <body>
   <div class="chat-wrapper">
-    <div class="chat-title">Chat Telemetría de Microservicios</div>
+    <div class="chat-title">Microservice Telemetry Agent</div>
     <div class="messages-list" id="messagesList"></div>
     <form class="input-row" id="chatForm" autocomplete="off">
-      <input type="text" id="chatInput" placeholder="Escribe tu pregunta..." autocomplete="off" />
-      <button type="submit">Enviar</button>
+      <input type="text" id="chatInput" placeholder="Type your question..." autocomplete="off" />
+      <button type="submit">Send</button>
     </form>
   </div>
   <script>
@@ -156,18 +158,18 @@
       metaInfo.className = 'meta-info';
       metaInfo.innerHTML = `<strong>${name}</strong> — ${formatDate(timestamp)}`;
 
-      if (sender === 'user') {
-        meta.appendChild(avatar);
-        meta.appendChild(metaInfo);
-      } else {
-        meta.appendChild(avatar);
-        meta.appendChild(metaInfo);
-      }
+      meta.appendChild(avatar);
+      meta.appendChild(metaInfo);
 
       // Message bubble
       const bubble = document.createElement('div');
       bubble.className = 'message-bubble';
-      bubble.textContent = message;
+      if (sender === 'bot') {
+        // Render Markdown for bot messages
+        bubble.innerHTML = marked.parse(message || '');
+      } else {
+        bubble.textContent = message;
+      }
 
       row.appendChild(meta);
       row.appendChild(bubble);
